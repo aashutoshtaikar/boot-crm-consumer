@@ -4,49 +4,54 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.servlet.ModelAndView;
+import org.thymeleaf.spring6.context.webflux.IReactiveDataDriverContextVariable;
+import org.thymeleaf.spring6.context.webflux.ReactiveDataDriverContextVariable;
 
 import com.demo.model.Customer;
-import com.demo.service.CustomerService;
+import com.demo.service.CustomerServiceNew;
+
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Controller
 @RequestMapping("/customers")
 public class CustomerController {
 	
 	@Autowired
-	private CustomerService customerService;
+	private CustomerServiceNew customerService;
 	
 	@GetMapping("/list")
-	public ModelAndView getHomepage() {
-		ModelAndView mv = new ModelAndView();
-		mv.addObject("customers", customerService.getCustomers());
-		mv.setViewName("list-customers");
-		return mv;
+	public String getHomepage(final Model model) {
+		Flux<Customer> customers = customerService.getCustomers();
+//        IReactiveDataDriverContextVariable reactiveDataDrivenMode =
+//                new ReactiveDataDriverContextVariable(customers, 1);
+
+		model.addAttribute("customers", customers);
+		
+		return "list-customers";
 	}
 	
 	@GetMapping("/showAddForm")
-	public ModelAndView showAddForm() {
-		ModelAndView mv = new ModelAndView();
-		mv.addObject("customer", new Customer());
-		mv.setViewName("form-customer");
-		return mv;
+	public String showAddForm(final Model model) {
+		
+		model.addAttribute("customer", new Customer());
+		
+		return "form-customer";
 	}
 	
 	@GetMapping("/showUpdateForm")
-	public ModelAndView showUpdateForm(@RequestParam("id") Integer id) {
-		Customer customer = customerService.getCustomer(id);
+	public String showUpdateForm(final Model model, @RequestParam("id") Integer id) {
+		Mono<Customer> customer = customerService.getCustomer(id);
 		
-		ModelAndView mv = new ModelAndView();
-		mv.addObject("customer", customer);
-		mv.setViewName("form-customer");
-		return mv;
+		model.addAttribute("customer", customer);
+		
+		return "form-customer";
 		
 	}
 	
@@ -57,30 +62,26 @@ public class CustomerController {
 	}
 	
 	@GetMapping("/deleteCustomer")
-	public ModelAndView deleteCustomer(@RequestParam("id") Integer id) {
+	public String deleteCustomer(@RequestParam("id") Integer id) {
 		customerService.deleteCustomer(id);
-		
-		ModelAndView mv = new ModelAndView();
-		mv.setViewName("redirect:/customers/list");
-		return mv;	
+		return "redirect:/customers/list";	
 	}
 	
 	@GetMapping("/searchCustomers")
-	public ModelAndView searchCustomers(@RequestParam("theSearchName") String theSearchName) {
-		ModelAndView mv = new ModelAndView();
-		List<Customer> customers = customerService.searchCustomers(theSearchName);
+	public String searchCustomers(final Model model, @RequestParam("theSearchName") String theSearchName) {
+		
+		Mono<List<Customer>> customers = customerService.searchCustomers(theSearchName);
+		
 		if (customers!=null) {
-			mv.addObject("customers", customers);	
-			mv.addObject("customersFound", true);
-			mv.setViewName("list-customers");
+			model.addAttribute("customers", customers);	
+			model.addAttribute("customersFound", true);
 		}
 		else {
-			mv.addObject("customers", customerService.getCustomers());
-			mv.addObject("customersFound", false);
-			mv.setViewName("list-customers");	
+			model.addAttribute("customers", customerService.getCustomers());
+			model.addAttribute("customersFound", false);
 		}
 		
 		
-		return mv;
+		return "list-customers";
 	}
 }

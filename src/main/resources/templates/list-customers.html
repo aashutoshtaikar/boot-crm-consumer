@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Customers List</title>
+</head>
+<body>
+	<h2>Customers List</h2>
+	<input type="button" onclick="window.location.href='list'" value="Home">
+	<input type="button" onclick="window.location.href='showAddForm'" value="Add Customer">
+	<br><br>
+	<span th:if="${customerFound==false}">
+		<font color="red">Customers Not found</font>
+	</span>
+	<form action="searchCustomers">
+		<input type="text" name="theSearchName"> 
+		<input type="submit" value="Search">	
+	</form>
+		
+
+	<table>
+		<tr data-th-each="customer : ${customers}">
+			<td th:text="${customer.id}"></td>
+			<td th:text="${customer.name}"></td>
+			<td th:text="${customer.email}"></td>
+		</tr>
+	</table>
+
+</body>
+</html>
