@@ -3,57 +3,83 @@ package com.demo.service;
 import java.util.List;
 
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import com.demo.model.Customer;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class CustomerServiceImpl implements CustomerService {
 
-	private RestTemplate restTemplate;
-	
-	public CustomerServiceImpl(RestTemplate restTemplate) {
-		this.restTemplate = restTemplate;
-	}
+	private WebClient webClient = WebClient.create();
 	
 	private String restUrl = "http://localhost:8080/customers";
 	
 	@Override
 	public Customer getCustomer(int id) {
-		ResponseEntity<Customer> response = restTemplate.getForEntity(restUrl + "/" + id, Customer.class);
-		return response.getBody();
+		Customer customer = webClient.get()
+				.uri(restUrl + "/" + id)
+				.retrieve()
+				.bodyToMono(Customer.class)
+				.block();
+		
+		return customer;
 	}
 
 	@Override
 	public List<Customer> getCustomers() {
-		ResponseEntity<List<Customer>> response = restTemplate.exchange(restUrl, HttpMethod.GET, null, new ParameterizedTypeReference<List<Customer>>(){});
-		return response.getBody();
+		List<Customer> customers = webClient.get()
+				.uri(restUrl)
+				.retrieve()
+				.bodyToMono(new ParameterizedTypeReference<List<Customer>>(){})
+				.block();
+		
+		return customers;
 	}
 
 	@Override
 	public void addCustomer(Customer customer) {
-		restTemplate.postForEntity(restUrl, customer, String.class);
+		String addedCustomer = webClient.post()
+			.uri(restUrl)
+			.bodyValue(customer)
+			.retrieve()
+			.bodyToMono(String.class)
+			.block();
 	}
 
 	@Override
 	public void deleteCustomer(int id) {
-		restTemplate.delete(restUrl + "/" + id);
+		String deleted = webClient.delete()
+			.uri(restUrl + "/" + id)
+			.retrieve()
+			.bodyToMono(String.class)
+			.block();
 		
 	}
 
 	@Override
 	public List<Customer> searchCustomers(String name) {
-		ResponseEntity<List<Customer>> response = restTemplate.exchange(restUrl + "/searchName/" + name, HttpMethod.GET, null, new ParameterizedTypeReference<List<Customer>>(){});
-		return response.getBody();
+		List<Customer> customers = webClient.get()
+				.uri(restUrl + "/searchName/" + name)
+				.retrieve()
+				.bodyToMono(new ParameterizedTypeReference<List<Customer>>(){})
+				.block();
+
+		return customers;
 	}
 
 	@Override
 	public Customer searchId(int id) {
-		ResponseEntity<Customer> response = restTemplate.getForEntity(restUrl + "/" + id, Customer.class);
-		return response.getBody();
+		Customer customer = webClient.get()
+				.uri(restUrl + "/" + id)
+				.retrieve()
+				.bodyToMono(Customer.class)
+				.block();
+		
+		return customer;
 	}
 
 }
